@@ -1,35 +1,35 @@
 name: Running Dashboard
-
 on:
   schedule:
     - cron: '0 6 * * *'  # 08:00 svensk tid (UTC+2)
   workflow_dispatch:  # Kan även köras manuellt
-
 jobs:
   run-dashboard:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-
       - name: Installera beroenden
         run: |
           pip install requests pandas plotly polyline nbconvert jupyter
-
       - name: Kör notebooken
         env:
           STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
           STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
           STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
         run: |
-          jupyter nbconvert --to notebook --execute Running_Dashboard.ipynb --output Running_Dashboard_executed.ipynb
-
+          jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=600 Running_Dashboard.ipynb --output Running_Dashboard_executed.ipynb
+      - name: Committa index.html
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add index.html
+          git commit -m "Update dashboard"
+          git push
       - name: Skicka mail
         uses: dawidd6/action-send-mail@v3
         with:
@@ -41,4 +41,4 @@ jobs:
           to: ${{ secrets.GMAIL_USER }}
           subject: Running Dashboard
           body: Se bifogad fil
-          attachments: running_dashboard.html
+          attachments: index.html
